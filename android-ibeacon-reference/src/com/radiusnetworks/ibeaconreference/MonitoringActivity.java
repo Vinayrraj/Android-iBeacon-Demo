@@ -7,6 +7,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.RemoteException;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,25 +30,36 @@ public class MonitoringActivity extends Activity implements IBeaconConsumer {
 	private ArrayList<IBeacon> arrayL = new ArrayList<IBeacon>();
 	private LayoutInflater inflater;
 
+	private BeaconServiceUtility beaconUtill = null;
 	private IBeaconManager iBeaconManager = IBeaconManager.getInstanceForApplication(this);
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_monitor);
-
+		beaconUtill = new BeaconServiceUtility(this);
 		list = (ListView) findViewById(R.id.list);
 		adapter = new BeaconAdapter();
 		list.setAdapter(adapter);
 		inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
-		iBeaconManager.bind(this);
 	}
 
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		iBeaconManager.unBind(this);
+	}
+
+	@Override
+	protected void onStart() {
+		super.onStart();
+		beaconUtill.onStart(iBeaconManager, this);
+	}
+
+	@Override
+	protected void onStop() {
+		beaconUtill.onStop(iBeaconManager, this);
+		super.onStop();
 	}
 
 	@Override
@@ -67,16 +79,19 @@ public class MonitoringActivity extends Activity implements IBeaconConsumer {
 		iBeaconManager.setMonitorNotifier(new MonitorNotifier() {
 			@Override
 			public void didEnterRegion(Region region) {
+				Log.e("BeaconDetactorService", "didEnterRegion");
 				// logStatus("I just saw an iBeacon for the first time!");
 			}
 
 			@Override
 			public void didExitRegion(Region region) {
+				Log.e("BeaconDetactorService", "didExitRegion");
 				// logStatus("I no longer see an iBeacon");
 			}
 
 			@Override
 			public void didDetermineStateForRegion(int state, Region region) {
+				Log.e("BeaconDetactorService", "didDetermineStateForRegion");
 				// logStatus("I have just switched from seeing/not seeing iBeacons: " + state);
 			}
 

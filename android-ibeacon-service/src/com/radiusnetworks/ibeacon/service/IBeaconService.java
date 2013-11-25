@@ -32,10 +32,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
-import com.radiusnetworks.ibeacon.IBeacon;
-import com.radiusnetworks.ibeacon.Region;
 
 import android.app.Activity;
 import android.app.Notification;
@@ -53,6 +49,9 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.util.Log;
+
+import com.radiusnetworks.ibeacon.IBeacon;
+import com.radiusnetworks.ibeacon.Region;
 
 /**
  * Issues:
@@ -102,9 +101,9 @@ public class IBeaconService extends Service {
      * scanning.
      * 
      */
-    private static final long SCAN_PERIOD = 1100;
+    private static final long SCAN_PERIOD = 2100;
     private static final long BACKGROUND_SCAN_PERIOD = 30000;
-    private static final long BACKGROUND_BETWEEN_SCAN_PERIOD = 5*60*1000;
+    private static final long BACKGROUND_BETWEEN_SCAN_PERIOD = 300000; // 5*60*1000;
     
     /**
      * Class used for the client Binder.  Because we know this service always

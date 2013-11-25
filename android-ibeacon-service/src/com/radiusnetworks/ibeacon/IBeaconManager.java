@@ -28,13 +28,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import com.radiusnetworks.ibeacon.client.RangingTracker;
-import com.radiusnetworks.ibeacon.service.IBeaconData;
-import com.radiusnetworks.ibeacon.service.IBeaconService;
-import com.radiusnetworks.ibeacon.service.RangingData;
-import com.radiusnetworks.ibeacon.service.RegionData;
-import com.radiusnetworks.ibeacon.service.StartRMData;
-
 import android.bluetooth.BluetoothManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -48,16 +41,24 @@ import android.os.Messenger;
 import android.os.RemoteException;
 import android.util.Log;
 
+import com.radiusnetworks.ibeacon.client.RangingTracker;
+import com.radiusnetworks.ibeacon.service.IBeaconData;
+import com.radiusnetworks.ibeacon.service.IBeaconService;
+import com.radiusnetworks.ibeacon.service.RangingData;
+import com.radiusnetworks.ibeacon.service.RegionData;
+import com.radiusnetworks.ibeacon.service.StartRMData;
+
 /**
- * An class used to set up interaction with iBeacons from an <code>Activity</code> or <code>Service</code>.
- * This class is used in conjunction with <code>IBeaconConsumer</code> interface, which provides a callback 
- * when the <code>IBeaconService</code> is ready to use.  Until this callback is made, ranging and monitoring 
- * of iBeacons is not possible.
+ * An class used to set up interaction with iBeacons from an <code>Activity</code> or <code>Service</code>. This class
+ * is used in conjunction with <code>IBeaconConsumer</code> interface, which provides a callback when the
+ * <code>IBeaconService</code> is ready to use. Until this callback is made, ranging and monitoring of iBeacons is not
+ * possible.
  * 
- * In the example below, an Activity implements the <code>IBeaconConsumer</code> interface, binds
- * to the service, then when it gets the callback saying the service is ready, it starts ranging.
+ * In the example below, an Activity implements the <code>IBeaconConsumer</code> interface, binds to the service, then
+ * when it gets the callback saying the service is ready, it starts ranging.
  * 
- *  <pre><code>
+ * <pre>
+ * <code>
  *  public class RangingActivity extends Activity implements IBeaconConsumer {
  *  	protected static final String TAG = "RangingActivity";
  *  	private IBeaconManager iBeaconManager = IBeaconManager.getInstanceForApplication(this);
@@ -78,7 +79,7 @@ import android.util.Log;
  *        	 {@literal @}Override 
  *        	public void didRangeBeaconsInRegion(Collection<IBeacon> iBeacons, Region region) {
  *     			if (iBeacons.size() > 0) {
- *	      			Log.i(TAG, "The first iBeacon I see is about "+iBeacons.iterator().next().getAccuracy()+" meters away.");		
+ *       			Log.i(TAG, "The first iBeacon I see is about "+iBeacons.iterator().next().getAccuracy()+" meters away.");		
  *     			}
  *        	}
  *  		});
@@ -88,24 +89,27 @@ import android.util.Log;
  *  		} catch (RemoteException e) {	}
  *  	}
  *  }
- *  </code></pre>
+ *  </code>
+ * </pre>
  * 
  * @author David G. Young
- *
+ * 
  */
 public class IBeaconManager {
+
 	private static final String TAG = "IBeaconManager";
 	private Context context;
 	private static IBeaconManager client = null;
-	private Map<IBeaconConsumer,Boolean> consumers = new HashMap<IBeaconConsumer,Boolean>();
-	private Messenger serviceMessenger = null; 
+	private Map<IBeaconConsumer, Boolean> consumers = new HashMap<IBeaconConsumer, Boolean>();
+	private Messenger serviceMessenger = null;
 	protected RangeNotifier rangeNotifier = null;
-    protected MonitorNotifier monitorNotifier = null;
-    protected RangingTracker rangingTracker = new RangingTracker();
-	
+	protected MonitorNotifier monitorNotifier = null;
+	protected RangingTracker rangingTracker = new RangingTracker();
+
 	/**
-	 * An accessor for the singleton instance of this class.  A context must be provided, but if you need to use it from a non-Activity
-	 * or non-Service class, you can attach it to another singleton or a subclass of the Android Application class.
+	 * An accessor for the singleton instance of this class. A context must be provided, but if you need to use it from
+	 * a non-Activity or non-Service class, you can attach it to another singleton or a subclass of the Android
+	 * Application class.
 	 */
 	public static IBeaconManager getInstanceForApplication(Context context) {
 		if (!isInstantiated()) {
@@ -114,72 +118,75 @@ public class IBeaconManager {
 		}
 		return client;
 	}
-	
+
 	private IBeaconManager(Context context) {
 		this.context = context;
 	}
+
 	/**
-	 * Check if Bluetooth LE is supported by this Android device, and if so, make sure it is enabled.
-	 * Throws a RuntimeException if Bluetooth LE is not supported.  (Note: The Android emulator will do this)
+	 * Check if Bluetooth LE is supported by this Android device, and if so, make sure it is enabled. Throws a
+	 * RuntimeException if Bluetooth LE is not supported. (Note: The Android emulator will do this)
+	 * 
 	 * @return false if it is supported and not enabled
 	 */
 	public boolean checkAvailability() {
 		if (!context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
-			throw new BleNotAvailableException("Bluetooth LE not supported by this device"); 
-		}		
-		else {
-			if (((BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE)).getAdapter().isEnabled()){
+			throw new BleNotAvailableException("Bluetooth LE not supported by this device");
+		} else {
+			if (((BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE)).getAdapter().isEnabled()) {
 				return true;
 			}
-		}	
+		}
 		return false;
 	}
+
 	/**
-	 * Binds an Android <code>Activity</code> or <code>Service</code> to the <code>IBeaconService</code>.  The 
-	 * <code>Activity</code> or <code>Service</code> must implement the <code>IBeaconConsuemr</code> interface so
-	 * that it can get a callback when the service is ready to use.
+	 * Binds an Android <code>Activity</code> or <code>Service</code> to the <code>IBeaconService</code>. The
+	 * <code>Activity</code> or <code>Service</code> must implement the <code>IBeaconConsuemr</code> interface so that
+	 * it can get a callback when the service is ready to use.
 	 * 
-	 * @param consumer the <code>Activity</code> or <code>Service</code> that will receive the callback when the service is ready.
+	 * @param consumer
+	 *            the <code>Activity</code> or <code>Service</code> that will receive the callback when the service is
+	 *            ready.
 	 */
 	public void bind(IBeaconConsumer consumer) {
 		if (consumers.keySet().contains(consumer)) {
-			Log.i(TAG, "This consumer is already bound");					
-		}
-		else {
-			Log.i(TAG, "This consumer is not bound.  binding: "+consumer);	
+			Log.i(TAG, "This consumer is already bound");
+		} else {
+			Log.i(TAG, "This consumer is not bound.  binding: " + consumer);
 			consumers.put(consumer, false);
 			Intent intent = new Intent(consumer.getApplicationContext(), IBeaconService.class);
 			consumer.bindService(intent, iBeaconServiceConnection, Context.BIND_AUTO_CREATE);
-			Log.i(TAG, "consumer count is now:"+consumers.size());
+			Log.i(TAG, "consumer count is now:" + consumers.size());
 		}
 	}
-	
+
 	/**
-	 * Unbinds an Android <code>Activity</code> or <code>Service</code> to the <code>IBeaconService</code>.  This should
+	 * Unbinds an Android <code>Activity</code> or <code>Service</code> to the <code>IBeaconService</code>. This should
 	 * typically be called in the onDestroy() method.
 	 * 
-	 * @param consumer the <code>Activity</code> or <code>Service</code> that no longer needs to use the service.
+	 * @param consumer
+	 *            the <code>Activity</code> or <code>Service</code> that no longer needs to use the service.
 	 */
 	public void unBind(IBeaconConsumer consumer) {
 		if (consumers.keySet().contains(consumer)) {
-			Log.i(TAG, "Unbinding");			
+			Log.i(TAG, "Unbinding");
 			consumer.unbindService(iBeaconServiceConnection);
 			consumers.remove(consumer);
-		}
-		else {
-			Log.i(TAG, "This consumer is not bound to: "+consumer);
+		} else {
+			Log.i(TAG, "This consumer is not bound to: " + consumer);
 			Log.i(TAG, "Bound consumers: ");
 			for (int i = 0; i < consumers.size(); i++) {
-				Log.i(TAG, " "+consumers.get(i));
+				Log.i(TAG, " " + consumers.get(i));
 			}
 		}
 	}
 
 	/**
-	 * Specifies a class that should be called each time the <code>IBeaconService</code> gets ranging
-	 * data, which is nominally once per second when iBeacons are detected.
-	 *  
-	 * @see RangeNotifier 
+	 * Specifies a class that should be called each time the <code>IBeaconService</code> gets ranging data, which is
+	 * nominally once per second when iBeacons are detected.
+	 * 
+	 * @see RangeNotifier
 	 * @param notifier
 	 */
 	public void setRangeNotifier(RangeNotifier notifier) {
@@ -187,12 +194,12 @@ public class IBeaconManager {
 	}
 
 	/**
-	 * Specifies a class that should be called each time the <code>IBeaconService</code> gets sees
-	 * or stops seeing a Region of iBeacons.
-	 *  
-	 * @see MonitorNotifier 
+	 * Specifies a class that should be called each time the <code>IBeaconService</code> gets sees or stops seeing a
+	 * Region of iBeacons.
+	 * 
+	 * @see MonitorNotifier
 	 * @see #startMonitoringBeaconsInRegion(Region region)
-	 * @see Region 
+	 * @see Region
 	 * @param notifier
 	 */
 	public void setMonitorNotifier(MonitorNotifier notifier) {
@@ -200,167 +207,174 @@ public class IBeaconManager {
 	}
 
 	/**
-	 * Tells the <code>IBeaconService</code> to start looking for iBeacons that match the passed
-	 * <code>Region</code> object, and providing updates on the estimated distance very seconds while
-	 * iBeacons in the Region are visible.  Note that the Region's unique identifier must be retained to
-	 * later call the stopRangingBeaconsInRegion method.
-	 *  
+	 * Tells the <code>IBeaconService</code> to start looking for iBeacons that match the passed <code>Region</code>
+	 * object, and providing updates on the estimated distance very seconds while iBeacons in the Region are visible.
+	 * Note that the Region's unique identifier must be retained to later call the stopRangingBeaconsInRegion method.
+	 * 
 	 * @see IBeaconManager#setRangeNotifier(RangeNotifier)
 	 * @see IBeaconManager#stopRangingBeaconsInRegion(Region region)
-	 * @see RangeNotifier 
-	 * @see Region 
+	 * @see RangeNotifier
+	 * @see Region
 	 * @param region
 	 */
 	public void startRangingBeaconsInRegion(Region region) throws RemoteException {
 		Message msg = Message.obtain(null, IBeaconService.MSG_START_RANGING, 0, 0);
-		StartRMData obj = new StartRMData(new RegionData(region), rangingCallbackAction() );
+		StartRMData obj = new StartRMData(new RegionData(region), rangingCallbackAction());
 		msg.obj = obj;
-		msg.replyTo = rangingCallback;						 
+		msg.replyTo = rangingCallback;
 		serviceMessenger.send(msg);
 	}
+
 	/**
-	 * Tells the <code>IBeaconService</code> to stop looking for iBeacons that match the passed
-	 * <code>Region</code> object and providing distance information for them.
-	 *  
+	 * Tells the <code>IBeaconService</code> to stop looking for iBeacons that match the passed <code>Region</code>
+	 * object and providing distance information for them.
+	 * 
 	 * @see #setMonitorNotifier(MonitorNotifier notifier)
 	 * @see #startMonitoringBeaconsInRegion(Region region)
-	 * @see MonitorNotifier 
-	 * @see Region 
+	 * @see MonitorNotifier
+	 * @see Region
 	 * @param region
 	 */
 	public void stopRangingBeaconsInRegion(Region region) throws RemoteException {
 		Message msg = Message.obtain(null, IBeaconService.MSG_STOP_RANGING, 0, 0);
-		StartRMData obj = new StartRMData(new RegionData(region), rangingCallbackAction() );
+		StartRMData obj = new StartRMData(new RegionData(region), rangingCallbackAction());
 		msg.obj = obj;
 		serviceMessenger.send(msg);
 	}
+
 	/**
-	 * Tells the <code>IBeaconService</code> to start looking for iBeacons that match the passed
-	 * <code>Region</code> object.  Note that the Region's unique identifier must be retained to
-	 * later call the stopMonitoringBeaconsInRegion method.
-	 *  
+	 * Tells the <code>IBeaconService</code> to start looking for iBeacons that match the passed <code>Region</code>
+	 * object. Note that the Region's unique identifier must be retained to later call the stopMonitoringBeaconsInRegion
+	 * method.
+	 * 
 	 * @see IBeaconManager#setMonitorNotifier(MonitorNotifier)
 	 * @see IBeaconManager#stopMonitoringBeaconsInRegion(Region region)
-	 * @see MonitorNotifier 
-	 * @see Region 
+	 * @see MonitorNotifier
+	 * @see Region
 	 * @param region
 	 */
 	public void startMonitoringBeaconsInRegion(Region region) throws RemoteException {
 		Message msg = Message.obtain(null, IBeaconService.MSG_START_MONITORING, 0, 0);
-		StartRMData obj = new StartRMData(new RegionData(region), monitoringCallbackAction() );
+		StartRMData obj = new StartRMData(new RegionData(region), monitoringCallbackAction());
 		msg.obj = obj;
-		msg.replyTo = null; // TODO: remove this when we are converted to Intents					 
+		msg.replyTo = null; // TODO: remove this when we are converted to Intents
 		serviceMessenger.send(msg);
 	}
+
 	/**
-	 * Tells the <code>IBeaconService</code> to stop looking for iBeacons that match the passed
-	 * <code>Region</code> object.  Note that the Region's unique identifier is used to match it to
-	 * and existing monitored Region.
-	 *  
+	 * Tells the <code>IBeaconService</code> to stop looking for iBeacons that match the passed <code>Region</code>
+	 * object. Note that the Region's unique identifier is used to match it to and existing monitored Region.
+	 * 
 	 * @see IBeaconManager#setMonitorNotifier(MonitorNotifier)
 	 * @see IBeaconManager#startMonitoringBeaconsInRegion(Region region)
-	 * @see MonitorNotifier 
-	 * @see Region 
+	 * @see MonitorNotifier
+	 * @see Region
 	 * @param region
 	 */
 	public void stopMonitoringBeaconsInRegion(Region region) throws RemoteException {
 		Message msg = Message.obtain(null, IBeaconService.MSG_STOP_MONITORING, 0, 0);
-		StartRMData obj = new StartRMData(new RegionData(region), rangingCallbackAction() );
+		StartRMData obj = new StartRMData(new RegionData(region), rangingCallbackAction());
 		msg.obj = obj;
 		serviceMessenger.send(msg);
 	}
-	
+
 	private String rangingCallbackAction() {
-		String action = context.getPackageName()+".DID_RANGING";
-		Log.d(TAG, "ranging callback action: "+action);
+		String action = context.getPackageName() + ".DID_RANGING";
+		Log.d(TAG, "ranging callback action: " + action);
 		return action;
 	}
+
 	private String monitoringCallbackAction() {
-		String action = context.getPackageName()+".DID_MONITORING";
-		Log.d(TAG, "monitoring callback action: "+action);
+		String action = context.getPackageName() + ".DID_MONITORING";
+		Log.d(TAG, "monitoring callback action: " + action);
 		return action;
 	}
-	
+
 	private ServiceConnection iBeaconServiceConnection = new ServiceConnection() {
 		// Called when the connection with the service is established
-	    public void onServiceConnected(ComponentName className, IBinder service) {
-	    	Log.d(TAG,  "we have a connection to the service now");
-	        serviceMessenger = new Messenger(service);
-	        Iterator<IBeaconConsumer> consumerIterator = consumers.keySet().iterator();
-	        while (consumerIterator.hasNext()) {
-	        	IBeaconConsumer consumer = consumerIterator.next();
-	        	Boolean alreadyConnected = consumers.get(consumer);
-	        	if (!alreadyConnected) {		        	
-		        	consumer.onIBeaconServiceConnect();
-		        	consumers.put(consumer, true);
-	        	}
-	        }
-	    }
+		public void onServiceConnected(ComponentName className, IBinder service) {
+			Log.d(TAG, "we have a connection to the service now");
+			serviceMessenger = new Messenger(service);
+			Iterator<IBeaconConsumer> consumerIterator = consumers.keySet().iterator();
+			while (consumerIterator.hasNext()) {
+				IBeaconConsumer consumer = consumerIterator.next();
+				Boolean alreadyConnected = consumers.get(consumer);
+				if (!alreadyConnected) {
+					consumer.onIBeaconServiceConnect();
+					consumers.put(consumer, true);
+				}
+			}
+		}
 
-	    // Called when the connection with the service disconnects unexpectedly
-	    public void onServiceDisconnected(ComponentName className) {
-	        Log.e(TAG, "onServiceDisconnected");
-	    }
-	};	
-	
-	static class IncomingHandler extends Handler {
-        private final WeakReference<IBeaconManager> iBeaconManager; 
-
-        IncomingHandler(IBeaconManager manager) {
-            iBeaconManager = new WeakReference<IBeaconManager>(manager);
-        }
-		@Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                default:
-                    super.handleMessage(msg);
-                    RangingData data = (RangingData) msg.obj;
-                    Log.d(TAG, "Got a ranging callback with data: "+data);
-                    Log.d(TAG, "Got a ranging callback with "+data.getIBeacons().size()+" iBeacons"); 
-                    if (data.getIBeacons() != null) {
-                    	Iterator<IBeaconData> iterator = data.getIBeacons().iterator();
-                    	while (iterator.hasNext()) {
-                    		IBeaconData iBeaconData = iterator.next();
-                    		if (iBeaconData == null) {
-                    			Log.d(TAG, "null ibeacon found");
-                    		}
-                    		else {
-                    			iBeaconManager.get().rangingTracker.addIBeacon(iBeaconData);
-                    		}
-                    	}
-                        
-                    	IBeaconManager manager = iBeaconManager.get();
-                        if (manager.rangeNotifier != null) {                    	
-                        	Log.d(TAG, "Calling ranging notifier on :"+manager.rangeNotifier);
-                        	manager.rangeNotifier.didRangeBeaconsInRegion(iBeaconManager.get().rangingTracker.getIBeacons(), data.getRegion());
-                        }                    	
-                    }
-            }
-        }		
+		// Called when the connection with the service disconnects unexpectedly
+		public void onServiceDisconnected(ComponentName className) {
+			Log.e(TAG, "onServiceDisconnected");
+		}
 	};
-	
-    final Messenger rangingCallback = new Messenger(new IncomingHandler(this)); 
 
-    /**
-     * @see #monitorNotifier
-     * @return monitorNotifier
-     */
+	static class IncomingHandler extends Handler {
+		private final WeakReference<IBeaconManager> iBeaconManager;
+
+		IncomingHandler(IBeaconManager manager) {
+			iBeaconManager = new WeakReference<IBeaconManager>(manager);
+		}
+
+		@Override
+		public void handleMessage(Message msg) {
+			switch (msg.what) {
+			default:
+				super.handleMessage(msg);
+				RangingData data = (RangingData) msg.obj;
+				Log.d(TAG, "Got a ranging callback with data: " + data);
+				Log.d(TAG, "Got a ranging callback with " + data.getIBeacons().size() + " iBeacons");
+				if (data.getIBeacons() != null) {
+					Iterator<IBeaconData> iterator = data.getIBeacons().iterator();
+					while (iterator.hasNext()) {
+						IBeaconData iBeaconData = iterator.next();
+						if (iBeaconData == null) {
+							Log.d(TAG, "null ibeacon found");
+						} else {
+							iBeaconManager.get().rangingTracker.addIBeacon(iBeaconData);
+						}
+					}
+
+					IBeaconManager manager = iBeaconManager.get();
+					if (manager.rangeNotifier != null) {
+						Log.d(TAG, "Calling ranging notifier on :" + manager.rangeNotifier);
+						manager.rangeNotifier.didRangeBeaconsInRegion(
+								iBeaconManager.get().rangingTracker.getIBeacons(), data.getRegion());
+					}
+				}
+			}
+		}
+	};
+
+	final Messenger rangingCallback = new Messenger(new IncomingHandler(this));
+
+	/**
+	 * @see #monitorNotifier
+	 * @return monitorNotifier
+	 */
 	public MonitorNotifier getMonitoringNotifier() {
-		return this.monitorNotifier;		
-	}	
+		return this.monitorNotifier;
+	}
+
 	/**
 	 * @see #rangeNotifier
 	 * @return rangeNotifier
 	 */
 	public RangeNotifier getRangingNotifier() {
-		return this.rangeNotifier;		
-	}	
-    /**
-     * Determines if the singleton has been constructed already.  Useful for not overriding settings set declaratively in XML
-     * @return true, if the class has been constructed
-     */
+		return this.rangeNotifier;
+	}
+
+	/**
+	 * Determines if the singleton has been constructed already. Useful for not overriding settings set declaratively in
+	 * XML
+	 * 
+	 * @return true, if the class has been constructed
+	 */
 	public static boolean isInstantiated() {
 		return (client != null);
 	}
-			
+
 }

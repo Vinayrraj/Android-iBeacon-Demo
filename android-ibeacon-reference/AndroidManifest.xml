@@ -56,6 +56,13 @@
                 <action android:name="com.radiusnetworks.ibeaconreference.DID_MONITORING" />
             </intent-filter>
         </service>
+        <service
+            android:name="com.radiusnetworks.ibeaconreference.BeaconDetactorService"
+            android:enabled="true" >
+            <meta-data
+                android:name="background"
+                android:value="true" />
+        </service>
     </application>
 
 </manifest>
