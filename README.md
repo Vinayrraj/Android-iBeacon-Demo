@@ -8,4 +8,4 @@ Demo app for the Android library providing APIs to interact with iBeacons which 
 Lib project used in the Demo is provided by radiusnetworks.com : 
 https://github.com/RadiusNetworks/android-ibeacon-service
 
-![Alt text](Android-iBeacon-Demo/screenshot.png "Screen Shot")
+![Alt text](screenshot.png "Screen Shot")
