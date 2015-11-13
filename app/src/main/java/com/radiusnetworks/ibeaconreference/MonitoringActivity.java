@@ -43,6 +43,15 @@ public class MonitoringActivity extends Activity implements BeaconConsumer {
 		adapter = new BeaconAdapter();
 		list.setAdapter(adapter);
 		inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
+		//add your ibeacon Spec
+		addBaconSpecToBeaconManager();
+
+	}
+
+	private void addBaconSpecToBeaconManager() {
+		BeaconParser beaconParser = new BeaconParser().setBeaconLayout(BuildConfig.APPLE_BACON_SPEC);
+		iBeaconManager.getBeaconParsers().add(beaconParser);
 	}
 
 	@Override
